@@ -7,11 +7,11 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/")
-public class TestController {
+public class LogController {
 
     @GetMapping("test")
     @ResponseStatus(HttpStatus.OK)
     public Object testMethod(@RequestParam String name) {
-        return Map.of("name", name);
+        return Map.of("name", name, "test", "true");
     }
 }

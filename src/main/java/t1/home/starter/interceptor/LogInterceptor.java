@@ -2,6 +2,7 @@ package t1.home.starter.interceptor;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
@@ -11,12 +12,20 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
-
-/**
- * Логирование должно включать в себя метод запроса, URL, заголовки запроса и ответа, код ответа, время обработки запроса и т.д.
- */
 @Slf4j
+@AllArgsConstructor
 public class LogInterceptor implements HandlerInterceptor {
+
+    private final String level;
+
+    private final Boolean requestMethod;
+    private final Boolean requestUrl;
+    private final Boolean requestHeaders;
+    private final Boolean requestParam;
+
+    private final Boolean responseStatus;
+    private final Boolean responseHeaders;
+    private final Boolean responseProcessingTime;
 
     /**
      * перед обработкой запроса
@@ -26,8 +35,23 @@ public class LogInterceptor implements HandlerInterceptor {
             HttpServletRequest request,
             HttpServletResponse response,
             Object handler) throws Exception {
-        log.info("[" + request.getMethod() + "]" + "[" + request.getRequestURL() + "]" + "[" + getHeadersRequest(request) + "]"
-        + "[" + getParameters(request) + "]");
+
+        StringBuffer logStr = new StringBuffer();
+        if(requestMethod) {
+            logStr.append("[").append(request.getMethod()).append("]");
+        }
+        if(requestUrl) {
+            logStr.append("[").append(request.getRequestURL()).append("]");
+        }
+        if(requestHeaders) {
+            logStr.append("[").append(getHeadersRequest(request)).append("]");
+        }
+        if(requestParam) {
+            logStr.append("[").append(getParameters(request)).append("]");
+        }
+        logString(logStr.toString());
+
+        request.setAttribute("startTime", System.currentTimeMillis());
         return true;
     }
 
@@ -40,7 +64,21 @@ public class LogInterceptor implements HandlerInterceptor {
             HttpServletResponse response,
             Object handler,
             ModelAndView modelAndView) throws Exception {
-        log.info("[" + response.getStatus() + "]" + "[" + getHeadersResponse(response) + "]");
+
+        StringBuffer logStr = new StringBuffer();
+        if(responseStatus) {
+            logStr.append("[").append(response.getStatus()).append("]");
+        }
+        if(responseHeaders) {
+            logStr.append("[").append(getHeadersResponse(response)).append("]");
+        }
+        if(responseProcessingTime) {
+            long startTime = (Long) request.getAttribute("startTime");
+            long endTime = System.currentTimeMillis();
+            long processingTime = endTime - startTime;
+            logStr.append("[Processing Time: ").append(processingTime).append("ms]");
+        }
+        logString(logStr.toString());
     }
 
     private Map<String, String> getHeadersRequest(HttpServletRequest request) {
@@ -84,21 +122,16 @@ public class LogInterceptor implements HandlerInterceptor {
                 posted.append(request.getParameter(curr));
             }
         }
-        String ip = request.getHeader("X-FORWARDED-FOR");
-        String ipAddr = (ip == null) ? getRemoteAddr(request) : ip;
-        if (ipAddr!=null && !ipAddr.equals("")) {
-            posted.append("&_psip=" + ipAddr);
-        }
         return posted.toString();
     }
 
-    private String getRemoteAddr(HttpServletRequest request) {
-        String ipFromHeader = request.getHeader("X-FORWARDED-FOR");
-        if (ipFromHeader != null && ipFromHeader.length() > 0) {
-            log.debug("ip from proxy - X-FORWARDED-FOR : " + ipFromHeader);
-            return ipFromHeader;
+    private void logString(String logStr) {
+        if (level.equalsIgnoreCase("error")) {
+            log.error(logStr);
+        } else if(level.equalsIgnoreCase("warn")) {
+            log.warn(logStr);
+        } else {
+            log.info(logStr);
         }
-        return request.getRemoteAddr();
     }
-
 }

@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>t1.home</groupId>
-	<artifactId>starter</artifactId>
+	<artifactId>auto-logging-spring-boot-starter</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>starter</name>
 	<description>Demo project for Spring Boot</description>
